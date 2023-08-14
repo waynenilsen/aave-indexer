@@ -1,10 +1,13 @@
-#!/usr/bin/env node
+// This is the entry point for the CLI.
+
 import dotenv from 'dotenv'
-import { serve } from './server.ts'
+import { Server } from './server.ts'
 import { migrate } from './migrate.ts'
+import DatabaseService from './db.js'
 
 dotenv.config()
 
+// todo: this is not my favorite thing, we should consider removing it
 // @ts-expect-error BigInt is not supported by JSON
 // eslint-disable-next-line no-extend-native
 BigInt.prototype.toJSON = function () {
@@ -23,7 +26,10 @@ async function main (): Promise<void> {
   }
 
   if (command === 'serve') {
-    serve()
+    // create the dependency graph
+    const db = await DatabaseService.getInstance()
+    const server = new Server(db)
+    server.serve()
   } else if (command === 'migrate') {
     await migrate()
   } else {

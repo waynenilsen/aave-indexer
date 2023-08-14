@@ -1,4 +1,4 @@
-import express, { type Express } from 'express'
+import express, { type Express, type Request, type Response } from 'express'
 import pug from 'pug'
 import asyncHandler from 'express-async-handler'
 import { ethers, type EventLog } from 'ethers'
@@ -6,18 +6,22 @@ import { getProvider } from './provider.ts'
 import * as fs from 'fs'
 import { type BlockchainEvent } from './interfaces.ts'
 import crypto from 'crypto'
-import { DatabaseService } from './db.js'
+import DatabaseService from './db.ts'
 
-// this creates a new instance of the express app
-function getApp (): Express {
-  const app = express()
+export class Server {
+  db: DatabaseService
 
-  app.get('/', (_req, res) => {
-    const compiledFunction = pug.compileFile('./templates/index.html.pug')
-    res.send(compiledFunction({}))
-  })
+  constructor (db: DatabaseService) {
+    this.db = db
+  }
 
-  app.post('/ingest_block/:blockchainKey/:blockNumber/:contractAddress', asyncHandler(async (req, resp) => {
+  registerHandleIngestBlock (app: Express): void {
+    app.post('/ingest_block/:blockchainKey/:blockNumber/:contractAddress', asyncHandler(async (req, resp) => {
+      await this.handleIngestBlockWithInputValidation(req, resp)
+    }))
+  }
+
+  async handleIngestBlockWithInputValidation (req: Request, resp: Response): Promise<void> {
     // todo: consider validation framework
     const blockchainKey = req.params['blockchainKey']
     if (blockchainKey === undefined) {
@@ -43,6 +47,12 @@ function getApp (): Express {
       throw new Error('BlockNumber is not a number')
     }
 
+    const allLogs = await this.handleIngestBlock(blockchainKey, blockNumberValue, contractAddress)
+
+    resp.send(allLogs)
+  }
+
+  async handleIngestBlock (blockchainKey: string, blockNumberValue: number, contractAddress: string): Promise<BlockchainEvent[]> {
     // todo: consider middleware for initialization of provider and db connection
     const provider = getProvider(blockchainKey)
 
@@ -93,23 +103,46 @@ function getApp (): Express {
 
     const db = await DatabaseService.getInstance()
     await db.insertBlockchainEvents(allLogs)
-
-    resp.send(allLogs)
-  }))
-
-  return app
-}
-
-export function serve (): void {
-  const app = getApp()
-
-  const port = process.env['PORT']
-
-  if (port === null || port === undefined) {
-    throw new Error('Port is not set in PORT environment variable.')
+    return allLogs
   }
 
-  app.listen(port, () => {
-    console.log(`[server]: Server is running at http://localhost:${port}`)
-  })
+  /**
+     * Registers the handler for the home page
+     * @param app
+     */
+  registerHandleHome (app: Express): void {
+    app.get('/', (_req, res) => {
+      const compiledFunction = pug.compileFile('./templates/index.html.pug')
+      res.send(compiledFunction({}))
+    })
+  }
+
+  /**
+     * Creates the express app
+     */
+  private getApp (): Express {
+    const app = express()
+    this.registerHandleHome(app)
+    this.registerHandleIngestBlock(app)
+    return app
+  }
+
+  /**
+     * Starts the server
+     *
+     * Note this is a blocking call and will not return until the server is stopped.
+     */
+  serve (): void {
+    const app = this.getApp()
+
+    const port = process.env['PORT']
+
+    if (port === null || port === undefined) {
+      throw new Error('Port is not set in PORT environment variable.')
+    }
+
+    app.listen(port, () => {
+      console.log(`[server]: Server is running at http://localhost:${port}`)
+    })
+  }
 }
