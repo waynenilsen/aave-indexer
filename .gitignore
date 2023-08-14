@@ -38,4 +38,4 @@ Thumbs.db
 dist/**/*
 
 # sqlite database for local development
-./database.db
+database.db

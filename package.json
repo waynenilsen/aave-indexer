@@ -2,7 +2,7 @@
   "scripts": {
     "build": "npx tsc && npx esbuild --bundle ./src/cli.ts --platform=node --outdir=dist --sourcemap --format=esm --out-extension:.js=.mjs --external:sqlite3",
     "migrate": "npx ts-node --esm ./src/cli.ts migrate",
-    "reset-db": "rm ./database.db && npx yarn migrate",
+    "reset-db": "rm -f ./database.db && npx yarn migrate",
     "serve": "ts-node --esm ./src/cli.ts serve",
     "lint": "npx eslint ./src/**/*.ts",
     "lint-fix": "npx eslint --fix ./src/**/*.ts",
