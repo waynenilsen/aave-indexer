@@ -1,33 +1,21 @@
 import { afterEach, beforeAll, describe, expect, test } from '@jest/globals'
-import {
-  deleteAllBlockchainEvents,
-  getAllBlockchainEvents,
-  getBlockchains,
-  getConnection,
-  insertBlockchainEvents
-} from './db.ts'
-import { type Database } from 'sqlite'
+import { DatabaseService } from './db.ts'
 import * as crypto from 'crypto'
 import { type BlockchainEvent } from './interfaces.js'
 
 describe('db', () => {
-  let db: Database
+  let db: DatabaseService
 
   beforeAll(async () => {
-    db = await getConnection()
-    await deleteAllBlockchainEvents(db)
+    db = await DatabaseService.getInstance()
   })
 
   afterEach(async () => {
-    await deleteAllBlockchainEvents(db)
-  })
-
-  test('can connect to db', async () => {
-    expect(db).toBeDefined()
+    await db.deleteAllBlockchainEvents()
   })
 
   test('can get blockchains', async () => {
-    const blockchains = await getBlockchains(db)
+    const blockchains = await db.getBlockchains()
     expect(blockchains).toHaveLength(1)
     expect(blockchains).toBeDefined()
   })
@@ -60,10 +48,10 @@ describe('db', () => {
       return a.id.localeCompare(b.id)
     })
 
-    await insertBlockchainEvents(db, testEvents)
+    await db.insertBlockchainEvents(testEvents)
     // read them back
 
-    const allEvents = await getAllBlockchainEvents(db)
+    const allEvents = await db.getAllBlockchainEvents()
 
     // expect them to be the same
     expect(allEvents).toHaveLength(2)

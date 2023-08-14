@@ -5,8 +5,8 @@ import { ethers, type EventLog } from 'ethers'
 import { getProvider } from './provider.ts'
 import * as fs from 'fs'
 import { type BlockchainEvent } from './interfaces.ts'
-import { getConnection, insertBlockchainEvents } from './db.ts'
 import crypto from 'crypto'
+import { DatabaseService } from './db.js'
 
 // this creates a new instance of the express app
 function getApp (): Express {
@@ -91,8 +91,8 @@ function getApp (): Express {
       allLogs.push(...eventsFromLogs)
     }
 
-    const db = await getConnection()
-    await insertBlockchainEvents(db, allLogs)
+    const db = await DatabaseService.getInstance()
+    await db.insertBlockchainEvents(allLogs)
 
     resp.send(allLogs)
   }))

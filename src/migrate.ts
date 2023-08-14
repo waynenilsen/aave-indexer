@@ -1,6 +1,6 @@
-import { getConnection } from './db.ts'
+import { DatabaseService } from './db.ts'
 
 export async function migrate (): Promise<void> {
-  const db = await getConnection()
-  await db.migrate({})
+  const db = await DatabaseService.getInstance()
+  await db.migrate()
 }
