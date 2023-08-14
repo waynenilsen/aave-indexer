@@ -7,7 +7,7 @@ import { type BlockchainEvent, type DbBlockchain } from './interfaces.ts'
 // todo: is this how we want to handle our database connection by passing by argument? Dependency injection may
 //  be preferable.
 
-export class DatabaseService {
+export default class DatabaseService {
   db: Database
   static instance: DatabaseService | null = null
 

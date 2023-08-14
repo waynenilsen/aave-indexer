@@ -1,5 +1,5 @@
 import { afterEach, beforeAll, describe, expect, test } from '@jest/globals'
-import { DatabaseService } from './db.ts'
+import DatabaseService from './db.ts'
 import * as crypto from 'crypto'
 import { type BlockchainEvent } from './interfaces.js'
 
